@@ -15,12 +15,9 @@ A basic execution of the pipeline looks as follows:
 a) Without a site-specific config file
 
 ```bash
-nextflow run marchoeppner/gabi -profile singularity --input samples.csv \\
---reference_base /path/to/references \\
+nextflow run marchoeppner/ncrna-annotation -profile singularity --input samples.csv \\
 --run_name pipeline-test
 ```
-
-where `path_to_references` corresponds to the location in which you have [installed](installation.md) the pipeline references (this can be omitted to trigger an on-the-fly temporary installation, but is not recommended in production). 
 
 In this example, the pipeline will assume it runs on a single computer with the singularity container engine available. Available options to provision software are:
 
@@ -37,11 +34,11 @@ Additional software provisioning tools as described [here](https://www.nextflow.
 b) with a site-specific config file
 
 ```bash
-nextflow run marchoeppner/gabi -profile lsh --input samples.csv \\
+nextflow run marchoeppner/ncrna-annotation -profile lsh --input samples.csv \\
 --run_name pipeline-test 
 ```
 
-In this example, both `--reference_base` and the choice of software provisioning are already set in the local configuration `lsh` and don't have to be provided as command line argument. 
+In this example, the choice of software provisioning is already set in the local configuration `lsh` and doesn't have to be provided as command line argument. 
 
 ## Specifying pipeline version
 
@@ -51,7 +48,24 @@ If you are running this pipeline in a production setting, you will want to lock 
 nextflow run marchoeppner/pipeline -profile lsh -r 1.0 <other options here>
 ```
 
-The `-r` option specifies a github [release tag](https://github.com/marchoeppner/gabi/releases) or branch, so could also point to `main` for the very latest code release. Please note that every major release of this pipeline (1.0, 2.0 etc) comes with a new reference data set, which has the be [installed](installation.md) separately.
+The `-r` option specifies a github [release tag](https://github.com/marchoeppner/ncrna-annotation/releases) or branch, so could also point to `main` for the very latest code release. Please note that every major release of this pipeline (1.0, 2.0 etc) comes with a new reference data set, which has the be [installed](installation.md) separately.
+
+## Options
+
+### `--input samples.csv` [ default = null]
+
+The sample file which tells the pipeline the location and the desired IDs for the assembly/assemblies to be annotated. The format should be a comma-delimited CSV file as follows:
+
+```CSV
+id,fasta
+hg19,/path/to/hg19.fa
+```
+
+The file location can either be on a (shared) local file system or one a remote server (S3, FTP). Note that the pipeline cannot be resumed when starting off remote files, so prefer using locally stoed files instead. 
+
+### `--run_name my_pipeline_run` [default = null]
+
+Give this pipeline run a useful name.
 
 ## Resources
 

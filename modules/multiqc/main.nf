@@ -9,8 +9,6 @@ process MULTIQC {
     path('*')
     path(config)
     path(logo)
-    path(config)
-    path(logo)
 
     output:
     path('*multiqc_report.html'), emit: html

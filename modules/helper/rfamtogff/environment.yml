@@ -1,0 +1,7 @@
+name: rfamtogff
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - conda-forge::perl=5.32

@@ -9,27 +9,22 @@ workflow INPUT_CHECK {
     main:
     samplesheet
         .splitCsv(header:true, sep:',')
-        .map { row -> fastq_channel(row) }
-        .set { reads }
+        .map { row -> fasta_channel(row) }
+        .set { fasta }
 
     emit:
-    reads // channel: [ val(meta), [ reads ] ]
+    fasta // channel: [ val(meta), fasta ]
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
-def fastq_channel(LinkedHashMap row) {
+def fasta_channel(LinkedHashMap row) {
     meta = [:]
-    meta.sample_id    = row.patient_id
-    meta.library_id   = row.library_id
-    meta.readgroup_id = row.readgroup_id
+    meta.id    = row.id
+    
+    if (!file(row.fasta).exists()) {
+        exit 1, "ERROR: Fasta file does not exist for sample ${row.id}!"
+    }
 
-    array = []
-    if (!file(row.R1).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.R1}"
-    }
-    if (!file(row.R2).exists()) {
-        exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.R2}"
-    }
-    array = [ meta, [ file(row.R1), file(row.R2) ] ]
+    array = [ meta, file(row.fasta) ]
     return array
 }

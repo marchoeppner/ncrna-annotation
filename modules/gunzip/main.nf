@@ -1,9 +1,6 @@
 process GUNZIP {
-    tag "${meta.target}|${zipped}"
-
-    label 'medium_serial'
-
-    publishDir "${params.outdir}/${meta.target}/${meta.tool}", mode: 'copy'
+    tag "$archive"
+    label 'short_serial'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -11,25 +8,28 @@ process GUNZIP {
         'ubuntu:20.04' }"
 
     input:
-    tuple val(meta), path(zipped)
+    tuple val(meta), path(archive)
 
     output:
-    tuple val(meta), path(unzipped), emit: gunzip
-    path("versions.yml"), emit: versions
+    tuple val(meta), path("$gunzip"), emit: gunzip
+    path "versions.yml"             , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: zipped.getBaseName()
-
-    unzipped = prefix
-
+    gunzip = archive.toString() - '.gz'
     """
-    gunzip $args -c $zipped > $unzipped
+    gunzip \\
+        -f \\
+        $args \\
+        $archive
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         gunzip: \$(echo \$(gunzip --version 2>&1) | sed 's/^.*(gzip) //; s/ Copyright.*\$//')
     END_VERSIONS
-
     """
+    
 }

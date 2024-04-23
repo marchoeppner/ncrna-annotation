@@ -1,4 +1,8 @@
-# Pipeline
+# ncRNA annotation pipeline
+
+This pipeline performs prediction of non-coding RNAs from assemblies using profiles from the [Rfam](https://rfam.org/) database and [Infernal](http://eddylab.org/infernal/).
+
+For information on how to install and run this pipeline, please see below. 
 
 ## Documentation 
 
