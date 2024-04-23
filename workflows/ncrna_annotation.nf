@@ -8,6 +8,7 @@ include { MULTIQC }                         from './../modules/multiqc'
 include { CUSTOM_DUMPSOFTWAREVERSIONS }     from './../modules/custom/dumpsoftwareversions'
 include { GUNZIP as GUNZIP_RFAM_CM }        from './../modules/gunzip'
 include { GUNZIP as GUNZIP_RFAM_FAMILY }    from './../modules/gunzip'
+include { GUNZIP }                          from './../modules/gunzip'
 include { HELPER_RFAMTOGFF }                from './../modules/helper/rfamtogff'
 include { INFERNAL_PRESS }                  from './../modules/infernal/press'
 include { INFERNAL_SEARCH }                 from './../modules/infernal/search'
@@ -28,13 +29,39 @@ workflow NCRNA_ANNOTATION {
   
     main:
 
+    /*
+    Check the sample sheet format
+    */
     INPUT_CHECK(samplesheet)
 
+    /*
+    Check if any of the input files is gzipped
+    */
+    INPUT_CHECK.out.fasta.branch { meta,fasta ->
+        gzipped: fasta.getExtension() == "gz"
+        uncompressed: fasta.getExtension() != "gz"
+    }.set { ch_fasta }
+
+    /*
+    Decompress any gzipped assemblies
+    */
+    GUNZIP(
+        ch_fasta.gzipped
+    )
+
+    ch_fasta_combined = GUNZIP.out.gunzip.mix(ch_fasta.uncompressed)
+
+    /*
+    Split assemblies into smaller chunks for parallel processing
+    */
     FASTASPLITTER(
-        INPUT_CHECK.out.fasta,
+        ch_fasta_combined,
         params.fasta_chunk_size
     )
 
+    /*
+    Shenaningans to spread the list into a Channel
+    */
     FASTASPLITTER.out.chunks.branch { m,f ->
         single: f.getClass() != ArrayList
         multi: f.getClass() == ArrayList
@@ -77,13 +104,14 @@ workflow NCRNA_ANNOTATION {
     )
 
     INFERNAL_SEARCH.out.tbl
-    .groupTuple()
     .multiMap { m,t ->
         metadata: [m.id, m]
         tbl: [m.id,t ]
     }.set { ch_rfam_tbls }
 
-    ch_rfam_tbls.tbl.collectFile { mkey, file -> [ "${mkey}.rfam.tbl", file ] }
+    ch_rfam_tbls.tbl.collectFile { mkey, file -> 
+        [ "${mkey}.rfam.tbl", file ] 
+    }
     .map { file -> [ file.simpleName, file ] }
     .set { ch_merged_tbls }
 
