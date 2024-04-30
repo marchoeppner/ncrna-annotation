@@ -13,6 +13,14 @@ include { HELPER_RFAMTOGFF }                from './../modules/helper/rfamtogff'
 include { INFERNAL_PRESS }                  from './../modules/infernal/press'
 include { INFERNAL_SEARCH }                 from './../modules/infernal/search'
 include { FASTASPLITTER }                   from './../modules/helper/fastasplitter'
+include { BUSCO_BUSCO }                     from './../modules/busco/busco'
+include { BUSCO_DOWNLOAD }                  from './../modules/busco/download'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Include Subworkflows
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
 ch_multiqc_config = params.multiqc_config   ? Channel.fromPath(params.multiqc_config, checkIfExists: true).collect() : Channel.value([])
 ch_multiqc_logo   = params.multiqc_logo     ? Channel.fromPath(params.multiqc_logo, checkIfExists: true).collect() : Channel.value([])
@@ -21,6 +29,8 @@ rfam_cm_gz      = params.rfam_cm ? Channel.fromPath(params.rfam_cm)         : Ch
 rfam_family_gz  = params.rfam_family ? Channel.fromPath(params.rfam_family) : Channel.fromPath(params.references["rfam"].rfam_family)
 
 samplesheet     = params.input ? Channel.fromPath(params.input)             : Channel.from([])
+
+busco_taxon     = params.busco_taxon
 
 ch_versions = Channel.from([])
 multiqc_files = Channel.from([])
@@ -50,6 +60,24 @@ workflow NCRNA_ANNOTATION {
     )
 
     ch_fasta_combined = GUNZIP.out.gunzip.mix(ch_fasta.uncompressed)
+
+    /*
+    Download busco database
+    */
+    BUSCO_DOWNLOAD(
+        busco_taxon
+    )
+    ch_busco_db = BUSCO_DOWNLOAD.out.db
+
+    /*
+    Predict gene space coverage using BUSCO
+    */
+    BUSCO_BUSCO(
+        ch_fasta_combined,
+        busco_taxon,
+        ch_busco_db.collect()
+    )
+    ch_versions = ch_versions.mix(BUSCO_BUSCO.out.versions)
 
     /*
     Split assemblies into smaller chunks for parallel processing

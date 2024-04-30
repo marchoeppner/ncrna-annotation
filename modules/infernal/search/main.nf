@@ -13,6 +13,7 @@ process INFERNAL_SEARCH {
 
     output:
     tuple val(meta), path("*.tbl"), emit: tbl
+    tuple val(meta), path("*.out"), emit: txt
     path "versions.yml"           , emit: versions
 
     script:
