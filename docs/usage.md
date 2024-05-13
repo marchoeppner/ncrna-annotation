@@ -67,6 +67,10 @@ The file location can either be on a (shared) local file system or one a remote 
 
 Give this pipeline run a useful name.
 
+### `--skip_busc` [ default = false ]
+
+Skip the Busco step, for example if your compute system has no access to the internet. 
+
 ## Resources
 
 The following options can be set to control resource usage outside of a site-specific [config](https://github.com/marchoeppner/nf-configs) file.

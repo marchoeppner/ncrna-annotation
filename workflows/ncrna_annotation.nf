@@ -61,23 +61,25 @@ workflow NCRNA_ANNOTATION {
 
     ch_fasta_combined = GUNZIP.out.gunzip.mix(ch_fasta.uncompressed)
 
-    /*
-    Download busco database
-    */
-    BUSCO_DOWNLOAD(
-        busco_taxon
-    )
-    ch_busco_db = BUSCO_DOWNLOAD.out.db
+    if (!params.skip_busco) {
+        /*
+        Download busco database
+        */
+        BUSCO_DOWNLOAD(
+            busco_taxon
+        )
+        ch_busco_db = BUSCO_DOWNLOAD.out.db
 
-    /*
-    Predict gene space coverage using BUSCO
-    */
-    BUSCO_BUSCO(
-        ch_fasta_combined,
-        busco_taxon,
-        ch_busco_db.collect()
-    )
-    ch_versions = ch_versions.mix(BUSCO_BUSCO.out.versions)
+        /*
+        Predict gene space coverage using BUSCO
+        */
+        BUSCO_BUSCO(
+            ch_fasta_combined,
+            busco_taxon,
+            ch_busco_db.collect()
+        )
+        ch_versions = ch_versions.mix(BUSCO_BUSCO.out.versions)
+    }
 
     /*
     Split assemblies into smaller chunks for parallel processing
